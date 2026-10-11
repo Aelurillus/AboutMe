@@ -12,6 +12,12 @@ import { createPointerMotion } from './pointer-motion.js';
   const isSameOriginPath = value => {
     try { return new URL(value, document.baseURI).origin === location.origin; } catch { return false; }
   };
+  const isSteamEndpoint = value => {
+    try {
+      const url = new URL(value, document.baseURI);
+      return url.origin === 'https://steam-status.luckinming.workers.dev' && url.pathname === '/api/steam';
+    } catch { return false; }
+  };
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
   const fine = matchMedia('(hover: hover) and (pointer: fine)');
   const sections = $$('[data-section]');
@@ -203,13 +209,13 @@ import { createPointerMotion } from './pointer-motion.js';
   }
   $('#contactAvatar').addEventListener('error', () => { if (!$('#contactAvatar').src.endsWith(p.avatar)) $('#contactAvatar').src = p.avatar; });
   async function refreshPresence() {
-    if (!entered || presencePending || document.hidden || !isSameOriginPath(p.steam.endpoint)) return;
+    if (!entered || presencePending || document.hidden || !isSteamEndpoint(p.steam.endpoint)) return;
     presencePending = true;
     try {
       const response = await fetch(p.steam.endpoint, { signal: AbortSignal.timeout(20000), cache: 'no-store', credentials: 'same-origin' });
       if (!response.ok) throw new Error('Unavailable');
       const data = await response.json();
-      if (data.id !== p.steam.id) throw new Error('Wrong profile');
+      if (data.id && data.id !== p.steam.id) throw new Error('Wrong profile');
       showPresence(data);
     } catch { showPresence({ status: 'unavailable' }); }
     finally { presencePending = false; }

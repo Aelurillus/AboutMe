@@ -18,7 +18,7 @@ window.PROFILE = {
     { name: "Discord", icon: "discord", url: "https://discord.gg/nqVav26j" },
     { name: "Telegram", icon: "telegram", url: "https://t.me/Mingawa" }
   ],
-  steam: { name: "ItzMing", id: "76561199634129272", endpoint: "./api/steam", url: "https://steamcommunity.com/profiles/76561199634129272/" },
+  steam: { name: "ItzMing", id: "76561199634129272", endpoint: "https://steam-status.luckinming.workers.dev/api/steam", url: "https://steamcommunity.com/profiles/76561199634129272/" },
   clock: { zone: "Asia/Taipei", label: "Timezone" },
   footer: "UTC +08:00",
   // 可连接返回 { views: number } 的同源统计接口；为空时诚实显示本浏览器访问数。
