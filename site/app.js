@@ -2,6 +2,7 @@ import './profile.js';
 import { createMusicPlayer } from './music-player.js';
 import { parseWhisperConfig } from './whisper-config.js';
 import { createPointerMotion } from './pointer-motion.js';
+import { createMotion } from './motion.js';
 
 (() => {
   'use strict';
@@ -78,7 +79,7 @@ import { createPointerMotion } from './pointer-motion.js';
   function goTo(index) {
     if (!entered) return;
     const target = sections[Math.max(0, Math.min(index, sections.length - 1))];
-    target.scrollIntoView({ behavior: reduced.matches ? 'instant' : 'smooth', block: 'start' });
+    motion.scrollTo(target.getBoundingClientRect().top + scrollY);
     history.replaceState(null, '', `#${target.id}`);
   }
   let scrollQueued = false;
@@ -157,9 +158,6 @@ import { createPointerMotion } from './pointer-motion.js';
   }
   updateClock(); let clockTimer = setInterval(updateClock, 1000);
 
-  const revealObserver = new IntersectionObserver(entries => {
-    entries.forEach(entry => { if (entered && entry.isIntersecting) { entry.target.classList.add('is-in'); revealObserver.unobserve(entry.target); } });
-  }, { threshold: 0.12 });
   const pointerMotion = createPointerMotion({ cursor: $('#catCursor'), poses: p.cursor, fine, reduced });
   const hideCursor = pointerMotion.hide;
 
@@ -221,13 +219,14 @@ import { createPointerMotion } from './pointer-motion.js';
     finally { presencePending = false; }
   }
 
+  const motion = createMotion({ reduced });
   let gestureTimer, gestureArmed = true, wheelSum = 0, lastStepAt = 0;
   function nextStep(direction) {
     const points = [...sectionTops, pageBottom];
     let nearest = 0; points.forEach((point, i) => { if (Math.abs(point - scrollY) < Math.abs(points[nearest] - scrollY)) nearest = i; });
     const next = Math.max(0, Math.min(points.length - 1, nearest + direction));
     if (nearest === next) return;
-    scrollTo({ top: points[next], behavior: reduced.matches ? 'instant' : 'smooth' });
+    motion.scrollTo(points[next]);
   }
   addEventListener('wheel', event => {
     if (!entered || !fine.matches || reduced.matches || event.ctrlKey || Math.abs(event.deltaX) > Math.abs(event.deltaY)) return;
@@ -236,7 +235,7 @@ import { createPointerMotion } from './pointer-motion.js';
     if (event.target.closest('input,textarea,select,[contenteditable="true"]')) return;
     event.preventDefault(); clearTimeout(gestureTimer);
     gestureTimer = setTimeout(() => { gestureArmed = true; wheelSum = 0; }, 160);
-    if (!gestureArmed || performance.now() - lastStepAt < 520) return;
+    if (!gestureArmed || performance.now() - lastStepAt < 520 || motion.isScrolling()) return;
     wheelSum += event.deltaY;
     if (Math.abs(wheelSum) < 8) return;
     gestureArmed = false; lastStepAt = performance.now(); nextStep(wheelSum > 0 ? 1 : -1);
@@ -247,17 +246,25 @@ import { createPointerMotion } from './pointer-motion.js';
     if (event.key === 'PageDown' || (event.key === 'ArrowDown' && !interactive) || (event.key === ' ' && !interactive)) { event.preventDefault(); nextStep(event.shiftKey ? -1 : 1); }
     else if (event.key === 'PageUp' || (event.key === 'ArrowUp' && !interactive)) { event.preventDefault(); nextStep(-1); }
     else if (event.key === 'Home') { event.preventDefault(); goTo(0); }
-    else if (event.key === 'End') { event.preventDefault(); scrollTo({ top: document.documentElement.scrollHeight, behavior: reduced.matches ? 'instant' : 'smooth' }); }
+    else if (event.key === 'End') { event.preventDefault(); motion.scrollTo(document.documentElement.scrollHeight); }
     else if (event.key.toLowerCase() === 'm' && !interactive) $('#muteBtn').click();
   });
-  $('#gate').addEventListener('click', () => {
-    if (entered) return; entered = true;
+  let entering = false;
+  const entranceAssets = Promise.allSettled([
+    document.fonts.load('400 48px Chillax'), document.fonts.load('500 48px Chillax'),
+    document.fonts.load('400 16px Onest'), $('#avatarImg').decode()
+  ]);
+  $('#gate').addEventListener('click', async () => {
+    if (entered || entering) return;
+    entering = true;
+    $('#gate').setAttribute('aria-busy', 'true');
+    await entranceAssets;
+    entered = true;
     $('#gate').classList.add('is-gone'); document.body.classList.remove('is-loading');
     main.inert = false; $('#rail').inert = false;
     main.setAttribute('tabindex', '-1'); main.focus({ preventScroll: true });
     if (p.music.autoplayOnEntry) musicPlayer.play();
-    $$('.entrance').forEach((el, i) => setTimeout(() => el.classList.add('is-in'), reduced.matches ? 0 : 150 + i * 110));
-    $$('.reveal').forEach(el => revealObserver.observe(el));
+    motion.enter();
     if (!reduced.matches) { text('#statusText', ''); typeTick(); }
     viewCount(); refreshPresence();
     presenceTimer = setInterval(refreshPresence, 60000);

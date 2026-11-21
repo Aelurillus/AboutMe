@@ -30,3 +30,8 @@ main{position:relative}.hero{position:relative;min-height:100vh;min-height:100sv
 /* The visible progress is a composited fill; the native range keeps keyboard and touch seeking. */
 .seek-wrap{position:relative}.seek-track{position:absolute;left:0;right:0;height:4px;background:#ffffff17;border-radius:99px;overflow:hidden;pointer-events:none}.seek-fill{display:block;width:100%;height:100%;background:#bad0cf;transform:scaleX(0);transform-origin:left center}.seek{position:relative;height:18px;background:transparent}.is-playing.is-on-screen .seek-fill,.is-playing.is-on-screen .equalizer i{will-change:transform}.player:not(.is-on-screen) .equalizer i{animation-play-state:paused}
 .spotlight-light::before{content:"";position:absolute;inset:0;background:radial-gradient(320px circle at center,rgba(184,215,214,.09),transparent 80%);opacity:0;transition:opacity .2s}.spotlight:focus-within>.spotlight-light:not(.is-active)::before{opacity:.6}
+
+/* GSAP owns animated transforms; original dimensions, colors and layout stay intact. */
+.motion-enhanced .entrance,.motion-enhanced .reveal{opacity:1;transform:none;transition:none}
+.motion-enhanced .scroll-hint.entrance{transform:translateX(-50%)}
+.motion-enhanced .card,.motion-enhanced .play-button,.motion-enhanced .avatar-message,.motion-enhanced .player-control{transition-property:background,color,box-shadow}

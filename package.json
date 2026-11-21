@@ -1,0 +1,9 @@
+{
+  "name": "itzming-aboutme-apple",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": { "dev": "vite site --host 127.0.0.1", "build": "vite build site --base=./ --outDir ../dist --emptyOutDir", "preview": "vite preview site --outDir ../dist --host 127.0.0.1" },
+  "dependencies": { "gsap": "^3.13.0" },
+  "devDependencies": { "vite": "^7.2.2" }
+}
